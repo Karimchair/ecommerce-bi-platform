@@ -1,286 +1,633 @@
-# Cahier des besoins métier
+# Business Requirements — E-commerce BI Platform
 
-## 1. Projet
+## 1. Contexte
 
-Système décisionnel BI pour le pilotage d’une marketplace e-commerce
+Une entreprise e-commerce génère quotidiennement un grand volume de données provenant de plusieurs activités :
 
-## 2. Contexte métier
+- commandes ;
+- clients ;
+- paiements ;
+- produits ;
+- vendeurs ;
+- livraisons ;
+- avis clients.
 
-L’entreprise exploite une marketplace e-commerce contenant des données
-sur les clients, les commandes, les produits, les vendeurs, les paiements,
-les livraisons et les avis clients.
+Ces données peuvent être difficiles à analyser directement car elles sont réparties entre plusieurs sources.
 
-Ces données sont réparties dans plusieurs sources transactionnelles et
-ne permettent pas directement aux responsables d’obtenir une vision
-globale et fiable des performances de l’entreprise.
+L'objectif du projet est donc de construire une plateforme décisionnelle centralisée permettant de transformer ces données brutes en informations utiles pour la prise de décision.
 
-L’objectif du projet est de transformer ces données opérationnelles en
-informations intégrées, structurées et adaptées à l’aide à la décision.
+---
+
+## 2. Problématique
+
+L'entreprise souhaite répondre notamment aux questions suivantes :
+
+- Quel est le chiffre d'affaires de l'entreprise ?
+- Comment évoluent les ventes dans le temps ?
+- Quelles catégories génèrent le plus de revenus ?
+- Quels vendeurs sont les plus performants ?
+- Quelles régions génèrent le plus de commandes ?
+- Quel est le délai moyen de livraison ?
+- Quel pourcentage de commandes est livré en retard ?
+- Les retards ont-ils un impact sur la satisfaction client ?
+- Quelles catégories ont les meilleures ou les moins bonnes évaluations ?
+- Quel est le panier moyen des clients ?
+
+---
 
 ## 3. Utilisateurs cibles
 
-### Direction générale
+La plateforme peut être utilisée par plusieurs profils.
 
-La direction générale souhaite disposer d’une vision globale de :
+### Direction
 
-- chiffre d’affaires ;
-- volume de commandes ;
-- activité des clients ;
-- performances géographiques ;
-- performances logistiques ;
-- satisfaction client.
+Besoins :
 
-### Responsable commercial
+- vision globale de la performance ;
+- chiffre d'affaires ;
+- évolution des ventes ;
+- commandes ;
+- clients ;
+- principaux KPI.
 
-Le responsable commercial souhaite analyser :
+---
 
-- l’évolution du chiffre d’affaires ;
-- les performances des catégories de produits ;
-- les performances des vendeurs ;
-- l’activité des clients ;
-- les performances commerciales par zone géographique.
+### Équipe commerciale
 
-### Responsable logistique
+Besoins :
 
-Le responsable logistique souhaite analyser :
+- performances par catégorie ;
+- performances par produit ;
+- performances par vendeur ;
+- analyse géographique des ventes ;
+- évolution temporelle.
 
-- les délais de livraison ;
-- les retards de livraison ;
-- le taux de commandes en retard ;
-- les zones géographiques problématiques ;
-- la relation entre les retards de livraison et la satisfaction client.
+---
 
-## 4. Objectifs métier
+### Équipe logistique
 
-Le système décisionnel devra permettre aux utilisateurs de :
+Besoins :
 
-- suivre les performances commerciales ;
-- analyser l’évolution du chiffre d’affaires ;
-- identifier les catégories de produits les plus performantes ;
-- comparer les performances selon les zones géographiques ;
-- analyser les performances des vendeurs ;
-- suivre les performances logistiques ;
-- identifier les retards de livraison ;
-- analyser la satisfaction des clients ;
-- étudier la relation entre les retards de livraison et la satisfaction client.
+- délai moyen de livraison ;
+- commandes en retard ;
+- régions avec des problèmes de livraison ;
+- comparaison délai estimé / délai réel ;
+- performances des vendeurs.
 
-## 5. Questions décisionnelles
+---
 
-1. Comment évolue le chiffre d’affaires au cours du temps ?
-2. Quelles catégories de produits génèrent le plus de chiffre d’affaires ?
-3. Quelles régions génèrent le plus de ventes ?
-4. Quels vendeurs génèrent le plus de chiffre d’affaires ?
-5. Quel est le panier moyen des commandes ?
-6. Quel est le délai moyen de livraison ?
-7. Quel pourcentage des commandes est livré en retard ?
-8. Quelles régions connaissent le plus de retards de livraison ?
-9. Quelle est la note moyenne donnée par les clients ?
-10. Les commandes livrées en retard reçoivent-elles de moins bonnes notes ?
+### Équipe satisfaction client
 
-## 6. Principaux indicateurs de performance (KPI)
+Besoins :
 
-- Chiffre d’affaires total
-- Nombre total de commandes
-- Nombre total de clients
-- Panier moyen
-- Croissance du chiffre d’affaires
-- Délai moyen de livraison
-- Retard moyen
-- Taux de livraison en retard
-- Note moyenne des clients
+- note moyenne ;
+- analyse des avis ;
+- analyse des mauvaises évaluations ;
+- relation entre délai de livraison et satisfaction.
 
-## 7. Architecture décisionnelle
+---
 
-Le projet suit l’architecture suivante :
+## 4. Sources de données
 
-1. Sources de données opérationnelles et externes.
-2. Extraction, transformation et chargement des données (ETL).
-3. Data Warehouse PostgreSQL.
-4. Datamarts orientés métier.
-5. Modèles analytiques.
-6. Requêtage, exploration multidimensionnelle, tableaux de bord,
-   reporting et analyses métier.
+Les données proviennent principalement du dataset Olist.
 
-Le Data Warehouse et les datamarts sont distincts des modèles analytiques.
+Les principales sources sont :
 
-Le Data Warehouse stocke les données détaillées organisées sous forme
-de faits et de dimensions.
+```text
+olist_customers_dataset.csv
+olist_geolocation_dataset.csv
+olist_order_items_dataset.csv
+olist_order_payments_dataset.csv
+olist_order_reviews_dataset.csv
+olist_orders_dataset.csv
+olist_products_dataset.csv
+olist_sellers_dataset.csv
+product_category_name_translation.csv
+```
 
-Les modèles analytiques définissent notamment les dimensions,
-les hiérarchies, les niveaux, les mesures et les règles d’agrégation.
+---
 
-Une zone de staging PostgreSQL pourra être utilisée comme zone technique
-interne au processus ETL, mais elle ne sera pas considérée comme une
-couche décisionnelle principale.
+## 5. Architecture cible
 
-## 8. Sources de données
+La chaîne de traitement cible est :
 
-Les principales sources utilisées seront :
+```text
+CSV Olist
+    |
+    v
+Azure Blob Storage / ADLS Gen2
+    |
+    v
+Azure Data Factory
+    |
+    v
+PostgreSQL Staging
+    |
+    v
+Data Warehouse
+    |
+    v
+Datamarts
+    |
+    v
+Power BI
+```
 
-- `olist_customers_dataset.csv`
-- `olist_orders_dataset.csv`
-- `olist_order_items_dataset.csv`
-- `olist_products_dataset.csv`
-- `olist_sellers_dataset.csv`
-- `olist_order_reviews_dataset.csv`
-- `olist_order_payments_dataset.csv`
-- `product_category_name_translation.csv`
+---
 
-## 9. Besoins du Data Warehouse
+## 6. Exigences d'ingestion
 
-Le Data Warehouse devra :
+Le système doit permettre :
 
-- intégrer les données provenant des différentes sources ;
-- stocker des données nettoyées et cohérentes ;
-- conserver les données détaillées ;
-- utiliser une modélisation dimensionnelle ;
-- contenir des tables de faits et des tables de dimensions ;
-- permettre des analyses historiques et multidimensionnelles ;
-- garantir l’intégrité référentielle ;
-- utiliser des clés substituts lorsque cela est nécessaire.
+- de centraliser les fichiers sources ;
+- de charger automatiquement les fichiers ;
+- d'éviter les traitements manuels répétitifs ;
+- de surveiller les exécutions ;
+- de détecter les échecs ;
+- de permettre la relance des pipelines.
 
-### Dimensions prévues
+L'orchestration est réalisée avec :
 
-- Date
-- Client
-- Produit
-- Vendeur
-- Géographie
+```text
+Azure Data Factory
+```
 
-### Tables de faits prévues
+---
 
-- Ventes
-- Commandes
+## 7. Exigences de qualité des données
 
-Plusieurs tables de faits pourront partager des dimensions communes,
-permettant de construire une constellation.
+Les données doivent être contrôlées avant leur intégration dans le Data Warehouse.
 
-## 10. Besoins des datamarts
+### Valeurs manquantes
 
-### Datamart Sales
+Identifier les champs comportant des valeurs nulles.
 
-Le Datamart Sales devra permettre l’analyse selon :
+Selon la colonne :
 
-- la date ;
-- le produit ;
-- la catégorie ;
-- le client ;
-- le vendeur ;
-- l’État ;
-- la ville.
+- conserver ;
+- remplacer ;
+- exclure ;
+- identifier comme inconnue.
 
-Principales mesures :
+---
 
-- chiffre d’affaires ;
+### Doublons
+
+Identifier et supprimer les doublons lorsqu'ils représentent plusieurs fois la même information.
+
+Les identifiants uniques doivent notamment être contrôlés.
+
+---
+
+### Types de données
+
+Les colonnes doivent avoir des types adaptés :
+
+```text
+dates → DATE / TIMESTAMP
+prix → NUMERIC
+quantités → INTEGER
+identifiants → VARCHAR
+```
+
+---
+
+### Dates
+
+Les différentes dates doivent être vérifiées :
+
+- date d'achat ;
+- date d'approbation ;
+- date d'expédition ;
+- date de livraison ;
+- date estimée.
+
+Les incohérences chronologiques doivent être détectées.
+
+---
+
+### Valeurs numériques
+
+Les valeurs impossibles doivent être détectées.
+
+Exemples :
+
+```text
+prix < 0
+frais_transport < 0
+note < 1
+note > 5
+```
+
+---
+
+## 8. Zone Staging
+
+La zone staging contient les données provenant directement du système source.
+
+Exemple :
+
+```text
+staging.stg_customers
+staging.stg_orders
+staging.stg_order_items
+staging.stg_products
+staging.stg_sellers
+staging.stg_payments
+staging.stg_reviews
+staging.stg_geolocation
+```
+
+Cette zone facilite :
+
+- le contrôle ;
+- la transformation ;
+- le débogage ;
+- la traçabilité.
+
+---
+
+## 9. Modèle dimensionnel
+
+Le Data Warehouse est basé sur un modèle dimensionnel.
+
+### Dimension Date
+
+```text
+dim_date
+```
+
+Attributs possibles :
+
+- date ;
+- jour ;
+- numéro du jour ;
+- semaine ;
+- mois ;
+- nom du mois ;
+- trimestre ;
+- année.
+
+---
+
+### Dimension Customer
+
+```text
+dim_customer
+```
+
+Attributs possibles :
+
+- customer_key ;
+- customer_id ;
+- customer_unique_id ;
+- ville ;
+- état ;
+- code postal.
+
+---
+
+### Dimension Product
+
+```text
+dim_product
+```
+
+Attributs possibles :
+
+- product_key ;
+- product_id ;
+- catégorie ;
+- poids ;
+- longueur ;
+- hauteur ;
+- largeur.
+
+---
+
+### Dimension Seller
+
+```text
+dim_seller
+```
+
+Attributs possibles :
+
+- seller_key ;
+- seller_id ;
+- ville ;
+- état ;
+- code postal.
+
+---
+
+### Fact Orders
+
+```text
+fact_orders
+```
+
+Mesures possibles :
+
 - nombre de commandes ;
-- quantité vendue ;
-- panier moyen.
-
-### Datamart Logistics
-
-Le Datamart Logistics devra permettre l’analyse selon :
-
-- la date ;
-- le client ;
-- l’État ;
-- la ville ;
-- la catégorie de produit ;
-- le statut de livraison.
-
-Principales mesures :
-
+- montant total ;
+- frais de transport ;
 - délai de livraison ;
-- durée du retard ;
-- nombre de commandes en retard ;
-- taux de livraison en retard ;
-- note client.
+- retard de livraison ;
+- nombre d'articles.
 
-Les datamarts seront dérivés du Data Warehouse à l’aide de vues
-matérialisées PostgreSQL.
+---
 
-## 11. Besoins des modèles analytiques
+### Fact Order Items
 
-### Modèle analytique Sales
+```text
+fact_order_items
+```
 
-Hiérarchies prévues :
+Mesures possibles :
 
-- Date : Année > Trimestre > Mois > Jour
-- Produit : Catégorie > Produit
-- Géographie : État > Ville
+- prix ;
+- frais de transport ;
+- quantité.
 
-Mesures principales :
+---
 
-- Chiffre d’affaires total
-- Nombre total de commandes
-- Nombre total d’articles vendus
-- Panier moyen
-- Croissance du chiffre d’affaires
+### Fact Payments
 
-### Modèle analytique Logistics
+```text
+fact_payments
+```
 
-Hiérarchies prévues :
+Mesures possibles :
 
-- Date : Année > Trimestre > Mois > Jour
-- Géographie : État > Ville
-- Produit : Catégorie > Produit
+- montant payé ;
+- nombre de versements.
 
-Mesures principales :
+---
 
-- Délai moyen de livraison
-- Retard moyen
-- Taux de livraison en retard
-- Note moyenne des clients
-- Nombre total de commandes livrées
+## 10. Datamart Sales
 
-Power BI sera utilisé pour implémenter les modèles sémantiques contenant
-les relations, les hiérarchies et les mesures DAX.
+Le datamart Sales doit permettre les analyses suivantes :
 
-Ces modèles joueront le rôle de couche analytique multidimensionnelle,
-mais ne seront pas présentés comme des cubes MOLAP classiques.
+- chiffre d'affaires total ;
+- chiffre d'affaires mensuel ;
+- nombre de commandes ;
+- nombre de clients ;
+- panier moyen ;
+- chiffre d'affaires par produit ;
+- chiffre d'affaires par catégorie ;
+- chiffre d'affaires par vendeur ;
+- chiffre d'affaires par région.
 
-## 12. Besoins de restitution
+---
 
-La solution devra permettre :
+## 11. Datamart Logistics
 
-- des requêtes analytiques SQL ;
-- la navigation drill-down et roll-up ;
-- l’utilisation de filtres ;
-- l’exploration multidimensionnelle ;
-- la création de tableaux de bord Power BI ;
-- la visualisation des données ;
-- la production d’un rapport structuré ;
-- la formulation d’analyses et de recommandations métier.
+Le datamart Logistics doit permettre :
 
-## 13. Besoins de qualité des données
+- analyse du délai moyen ;
+- analyse des commandes en retard ;
+- comparaison date estimée / réelle ;
+- analyse des retards par vendeur ;
+- analyse des retards par région ;
+- analyse des retards par catégorie.
 
-Le processus ETL devra contrôler :
+---
 
-- les valeurs manquantes ;
-- les doublons ;
-- les dates invalides ;
-- les valeurs numériques invalides ;
-- les commandes sans correspondance ;
-- les clients inconnus ;
-- les produits inconnus ;
-- les vendeurs inconnus ;
-- les montants négatifs ;
-- le nombre de lignes entre les sources et les données chargées.
+## 12. Satisfaction client
 
-Un rapport de qualité des données sera généré après le traitement.
+L'analyse de la satisfaction doit permettre d'étudier :
 
-## 14. Périmètre du projet
+- note moyenne ;
+- distribution des notes ;
+- nombre d'avis ;
+- avis positifs ;
+- avis négatifs ;
+- notes par catégorie ;
+- notes par vendeur ;
+- impact des retards sur les notes.
 
-La première version du projet se concentre sur :
+Une analyse importante sera notamment :
 
-- l’intégration des données ;
-- la qualité des données ;
-- la modélisation dimensionnelle ;
-- l’implémentation du Data Warehouse ;
-- les datamarts ;
-- les modèles analytiques ;
-- les analyses SQL ;
-- Power BI ;
-- DAX ;
-- le reporting.
+```text
+Délai de livraison
+        ↓
+Retard
+        ↓
+Satisfaction client
+```
 
-Le Machine Learning n’est pas nécessaire dans la première version du projet.
+---
+
+## 13. KPI principaux
+
+### KPI commerciaux
+
+```text
+Chiffre d'affaires
+Nombre de commandes
+Nombre de clients
+Panier moyen
+Croissance du chiffre d'affaires
+```
+
+---
+
+### KPI logistiques
+
+```text
+Délai moyen de livraison
+Taux de retard
+Nombre de commandes en retard
+Écart moyen date prévue / réelle
+```
+
+---
+
+### KPI satisfaction
+
+```text
+Note moyenne
+Taux d'avis positifs
+Taux d'avis négatifs
+Note moyenne des commandes en retard
+Note moyenne des commandes livrées à temps
+```
+
+---
+
+## 14. Règles métier
+
+### Chiffre d'affaires
+
+Le chiffre d'affaires peut être calculé à partir du prix des articles vendus.
+
+```text
+CA = somme(price)
+```
+
+Selon l'analyse, les frais de transport doivent être traités séparément.
+
+---
+
+### Panier moyen
+
+```text
+Panier moyen =
+Chiffre d'affaires / Nombre de commandes
+```
+
+---
+
+### Délai de livraison
+
+```text
+Délai de livraison =
+date_livraison_client - date_commande
+```
+
+---
+
+### Commande en retard
+
+Une commande est considérée comme en retard si :
+
+```text
+date_livraison_client
+>
+date_livraison_estimee
+```
+
+---
+
+### Taux de retard
+
+```text
+Taux de retard =
+Nombre de commandes en retard
+/
+Nombre de commandes livrées
+```
+
+---
+
+## 15. Dashboards attendus
+
+### Dashboard 1 — Executive Overview
+
+Contenu :
+
+- CA ;
+- commandes ;
+- clients ;
+- panier moyen ;
+- évolution mensuelle ;
+- satisfaction ;
+- retard.
+
+---
+
+### Dashboard 2 — Sales Analysis
+
+Contenu :
+
+- CA par catégorie ;
+- CA par produit ;
+- CA par vendeur ;
+- évolution temporelle ;
+- analyse géographique.
+
+---
+
+### Dashboard 3 — Logistics
+
+Contenu :
+
+- délai moyen ;
+- retard ;
+- livraison par région ;
+- performance vendeur ;
+- évolution mensuelle.
+
+---
+
+### Dashboard 4 — Customer Satisfaction
+
+Contenu :
+
+- note moyenne ;
+- distribution des notes ;
+- analyse des retards ;
+- comparaison livraisons à temps / retard ;
+- catégories les mieux et les moins bien évaluées.
+
+---
+
+## 16. Exigences techniques
+
+Le projet doit utiliser principalement :
+
+```text
+Azure Data Factory
+Azure Blob Storage / ADLS Gen2
+PostgreSQL
+SQL
+Power BI
+DAX
+```
+
+Python peut être utilisé pour :
+
+```text
+exploration
+contrôle
+validation
+analyse complémentaire
+```
+
+mais ne doit pas remplacer Azure Data Factory pour la partie ETL principale.
+
+---
+
+## 17. Livrables
+
+Le projet doit produire :
+
+- une architecture documentée ;
+- des pipelines Azure Data Factory ;
+- une base PostgreSQL ;
+- une zone staging ;
+- un Data Warehouse ;
+- des datamarts ;
+- des scripts SQL ;
+- un modèle Power BI ;
+- plusieurs dashboards ;
+- des KPI DAX ;
+- une documentation GitHub ;
+- des captures des pipelines et dashboards.
+
+---
+
+## 18. Résultat attendu
+
+À la fin du projet, le système doit permettre de passer automatiquement de données brutes à des informations exploitables :
+
+```text
+Données brutes
+      ↓
+Azure Storage
+      ↓
+Azure Data Factory
+      ↓
+Staging
+      ↓
+Data Warehouse
+      ↓
+Datamarts
+      ↓
+Power BI
+      ↓
+Décision
+```
+
+Le projet doit démontrer une compréhension pratique d'une chaîne moderne de **Data Engineering et Business Intelligence**.
